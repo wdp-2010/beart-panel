@@ -42,4 +42,7 @@ docker-compose.yaml
 *.tsbuildinfo
 next-env.d.ts
 
+package-lock.json
+package.json.bak
+
 /src/generated/prisma
