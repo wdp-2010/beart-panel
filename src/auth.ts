@@ -9,7 +9,7 @@ import prisma from "@/lib/prisma"
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: {
-    strategy: "database", // Sessions stored in your Postgres DB
+    strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
@@ -40,6 +40,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return {
           id: user.id,
           email: user.email,
+          image: user.image,
           name: user.name,
           role: user.role,
         }
@@ -47,10 +48,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async session({ session, user }) {
+    async jwt({ token, user }) {
       if (user) {
-        session.user.id = user.id
-        session.user.role = user.role
+        token.role = user.role
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user && token.sub) {
+        const user = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: {
+            name: true,
+            image: true,
+            role: true,
+          },
+        })
+
+        if (user) {
+          session.user.id = token.sub
+          session.user.name = user.name
+          session.user.image = user.image
+          session.user.role = user.role
+          return session
+        }
+
+        session.user.id = token.sub
+        session.user.role = token.role ?? session.user.role
       }
       return session
     },

@@ -6,17 +6,22 @@ import { signIn } from "next-auth/react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
 
 const formSchema = z.object({
   email: z.string().email({ message: "Enter a valid email." }),
@@ -25,7 +30,11 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>
 
-export function LoginForm({ callbackUrl = "/dashboard" }: { callbackUrl?: string }) {
+export function LoginForm({
+  className,
+  callbackUrl = "/dashboard",
+  ...props
+}: React.ComponentProps<"div"> & { callbackUrl?: string }) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -36,7 +45,7 @@ export function LoginForm({ callbackUrl = "/dashboard" }: { callbackUrl?: string
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { email: "wannes@wdpserver.com", password: "" },
+    defaultValues: { email: "", password: "" },
   })
 
   async function onSubmit(values: FormValues) {
@@ -68,68 +77,61 @@ export function LoginForm({ callbackUrl = "/dashboard" }: { callbackUrl?: string
   }
 
   return (
-    <Card className="w-full max-w-md border-border/60 bg-card/90 shadow-2xl shadow-black/5 backdrop-blur">
-      <CardHeader className="space-y-4">
-        <div className="inline-flex w-fit items-center gap-2 rounded-full border border-border/60 bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-          <span className="h-2 w-2 rounded-full bg-emerald-500" />
-          Secure access
-        </div>
-        <div className="space-y-2">
-          <CardTitle className="text-3xl font-semibold tracking-tight">
-            Sign in to Beart Panel
-          </CardTitle>
-          <CardDescription className="text-base leading-6">
-            Manage documents, projects, and tasks from a single dashboard.
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Card>
+        <CardHeader>
+          <CardTitle>Login to your Beart Panel</CardTitle>
+          <CardDescription>
+            Enter your email below to login to your account
           </CardDescription>
-        </div>
-      </CardHeader>
-
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-5">
-          {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@company.com"
-              autoComplete="email"
-              {...register("email")}
-            />
-            {errors.email && (
-              <p className="text-xs text-red-500">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              autoComplete="current-password"
-              {...register("password")}
-            />
-            {errors.password && (
-              <p className="text-xs text-red-500">{errors.password.message}</p>
-            )}
-          </div>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <FieldGroup>
+              {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+              <Field>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="someone@somewhere.com"
+                  autoComplete="email"
+                  {...register("email")}
+                />
+                {errors.email && (
+                  <p className="text-xs text-red-500">{errors.email.message}</p>
+                )}
+              </Field>
+              <Field>
+                <div className="flex items-center">
+                  <FieldLabel htmlFor="password">Password</FieldLabel>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  {...register("password")}
+                />
+                {errors.password && (
+                  <p className="text-xs text-red-500">{errors.password.message}</p>
+                )}
+              </Field>
+              <Field>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Signing in..." : "Login"}
+                </Button>
+                <FieldDescription className="text-center">
+                  Don&apos;t have an account? <a href="mailto:contact@be-art.com">Contact Be-Art</a>
+                </FieldDescription>
+              </Field>
+            </FieldGroup>
+          </form>
         </CardContent>
-
-        <CardFooter className="flex flex-col gap-3">
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Signing in..." : "Sign In"}
-          </Button>
-          <p className="text-center text-xs text-muted-foreground">
-            You will be redirected to your dashboard once authentication succeeds.
-          </p>
-        </CardFooter>
-      </form>
-    </Card>
+      </Card>
+    </div>
   )
 }
